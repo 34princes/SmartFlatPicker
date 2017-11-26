@@ -6,14 +6,14 @@ import xmltodict
 import aiofiles
 import bs4 as BeautifulSoup
 import base64
+from sys import argv
 from aiohttp import ClientSession
 
 
 class SeLogerComScraper:
     SEARCH_URL = 'http://ws.seloger.com/search.xml'
 
-    def __init__(self, images_dir, dbhost, dbport):
-        self.img_dir = images_dir
+    def __init__(self, dbhost, dbport):
         self.client = motor.motor_asyncio.AsyncIOMotorClient(dbhost, int(dbport))
         self.db = self.client.SmartFlatPicker
         self.updates = 0
@@ -76,16 +76,16 @@ class SeLogerComScraper:
         result = await self.db.annonces.insert_one(doc)
         logging.info('inserted {0}'.format(repr(result.inserted_id)))
 
-    async def save_annonce_images_async(self, annonce):
-        for std_url in annonce.find_all('stdurl'):
-            annonce_id = annonce.find('idannonce').text
-            img_url = std_url.text
-            try:
-                path = os.path.join(self.img_dir, annonce_id + '_' + os.path.basename(img_url))
-                if not os.path.isfile(path):
-                    await self.retrieve_url_content_async(img_url, path)
-            except:
-                logging.error('errow with ' + img_url)
+    # async def save_annonce_images_async(self, annonce):
+    #     for std_url in annonce.find_all('stdurl'):
+    #         annonce_id = annonce.find('idannonce').text
+    #         img_url = std_url.text
+    #         try:
+    #             path = os.path.join(self.img_dir, annonce_id + '_' + os.path.basename(img_url))
+    #             if not os.path.isfile(path):
+    #                 await self.retrieve_url_content_async(img_url, path)
+    #         except:
+    #             logging.error('errow with ' + img_url)
 
     async def retrieve_url_content_async(self, url, path):
         try:
@@ -104,17 +104,20 @@ class SeLogerComScraper:
 
 
 # inputs
-LOCAL_PATH = '/home/gege/Production/SmartFlatPicker/'
-DB_HOST = 'LOCALHOST'
-DB_PORT = 27017
+if len(argv) != 4:
+    print('invalid arguments, ex: <script.py> <db_host> <db_port> <log_file>')
+    exit(1)
+
+db_host = argv[1]  # 'LOCALHOST'
+db_port = int(argv[2])  #  27017
+log_file = argv[3]  # ../log.txt
 DISTRICTS = [i + 75001 for i in range(20)]
 
 # logger
-logging.basicConfig(filename=os.path.join(LOCAL_PATH, 'log/log.txt'), level=logging.INFO,
-                    format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(filename=log_file, level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
-#  scraoer
+#  scraper
 logging.info('starting webscraping')
-slg = SeLogerComScraper(LOCAL_PATH + 'img', DB_HOST, DB_PORT)
+slg = SeLogerComScraper(db_host, db_port)
 slg.get_flats(DISTRICTS)
 logging.info('webscraping is over')

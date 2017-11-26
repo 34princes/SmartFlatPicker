@@ -82,5 +82,6 @@ scores = cross_val_score(clf, X_train, y_train, cv=5)
 print(scores.mean())
 
 # price custom flat
-x = clf.predict([3, 2, 69 + 18 / 3, 75011, 1, 0, 1, 0, 1, 1])
+#x = clf.predict([3, 2, 69 + 18 / 3, 75011, 1, 0, 1, 0, 1, 1])
+x = clf.predict([4, 3, 105.6 + 40. / (2), 75011, 1, 1, 2, 1, 0, 1])
 print(x)
